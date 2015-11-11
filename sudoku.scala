@@ -6,15 +6,17 @@ class Sudoku(size: Int, stream: Iterator[Int]){
   val N = size * size
   var qboard = new QBoard(size, stream)
 
+  /* Backtrack wrapper */
   def solve (): Boolean = qboard.solved() match {
     case true => true
     case false => {
-      var sol = backtrack(qboard)
-      if (sol == null) false
-      else {qboard = sol; true}
+      var soln = backtrack(qboard)
+      if (soln == null) false
+      else {qboard = soln; true}
     }
   }
 
+  /* Main solver routine */
   def backtrack (board: QBoard): QBoard = {
     val spot = board.nextSpot()
     if (spot == null)

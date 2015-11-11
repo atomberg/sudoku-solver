@@ -42,6 +42,7 @@ class QBoard (size: Int) {
     this.update()
   }
 
+  /* Deep copy */
   override def clone(): QBoard = {
     val Copy = new QBoard(size);
     Array.copy(rows, 0, Copy.rows, 0, N)
@@ -54,6 +55,7 @@ class QBoard (size: Int) {
     return Copy
   }
 
+  /* Constructor update method, essentially a wrapper for the fill method */
   def update(): Boolean = {
     for (r <- 0 until N; c <- 0 until N) {
       if (solution(r)(c) == 0) {
@@ -67,6 +69,7 @@ class QBoard (size: Int) {
     return true
   }
 
+  /* Try to fill a spot and update recursively */
   def fill(r: Int, c: Int, v: Long): Boolean = {
     val b = size * (r / size) + (c / size)
     solution(r)(c) = toInt(v)
@@ -99,12 +102,14 @@ class QBoard (size: Int) {
     return true
   }
 
+  /* Next fillable spot */
   def nextSpot(): (Int, Int) = {
     for (r <- 0 until N; c <- 0 until N)
       if (solution(r)(c) == 0) return (r, c)
     return null
   }
 
+  /* Possible fill values */
   def possibilities (r: Int, c: Int): List[Long] = {
     var L = List[Long]()
     var x = puzzle(r)(c)
