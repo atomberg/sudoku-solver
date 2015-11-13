@@ -57,14 +57,12 @@ class QBoard (size: Int) {
 
   /* Constructor update method, essentially a wrapper for the fill method */
   def update(): Boolean = {
-    for (r <- 0 until N; c <- 0 until N) {
-      if (solution(r)(c) == 0) {
+    for (r <- 0 until N; c <- 0 until N; if (solution(r)(c) == 0) {
         val b = size * (r / size) + (c / size)
         puzzle(r)(c) = (~rows(r)) & (~cols(c)) & (~blocks(b)) & ALL
         if (puzzle(r)(c) == NONE ||
             (Long.bitCount(puzzle(r)(c)) == 1 && !fill(r,c, puzzle(r)(c))))
           return false
-      }
     }
     return true
   }
@@ -104,9 +102,15 @@ class QBoard (size: Int) {
 
   /* Next fillable spot */
   def nextSpot(): (Int, Int) = {
-    for (r <- 0 until N; c <- 0 until N)
-      if (solution(r)(c) == 0) return (r, c)
-    return null
+    /* Compute the number of possibilities for each empty cell */
+    var pos_counts = for (r <- 0 until N; c <- 0 until N; if solution(r)(c) == 0)
+                yield (Long.bitCount(puzzle(r)(c)), (r, c))
+    if (pos_counts.isEmpty) return null
+    /* Return the cell with fewest possibilities */
+    return (pos_counts.foldLeft(pos_counts(0)){
+      case (min, e) if min._1 > e._1 => e
+      case (min, e) => min
+    })._2
   }
 
   /* Possible fill values */
