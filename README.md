@@ -1,4 +1,6 @@
 # sudoku-solver
-A simple Sudoku solver written in Scala in an attempt to get familiar with the language.
+Two Sudoku solvers written in Scala: one uses simple backtracking to find a solution; the other parallelises te backtracking search using the AKKA framework.
 
-Usage: scala Solver \[filename\] (if no filename is given, the puzzle is read from stdin)
+Usage:
+scala Solver \[filename\] (if no filename is given, the puzzle is read from stdin), or
+scala Psolver \[filename\] (for the parallelised version)
