@@ -1,10 +1,12 @@
 package qboard
 import java.lang.Long
 
-class QBoard (size: Int) {
+class QBoard (board_size: Int) {
 
   /* Constants */
+  val size = board_size
   val N = size * size
+  var unknowns = N * N
   val ONE = 0x1L
   val NONE = 0x0L
   val ALL = (ONE << N) - 1
@@ -31,6 +33,7 @@ class QBoard (size: Int) {
         this.puzzle(i)(j) = x match {
           case 0 => this.ALL
           case x => {
+            this.unknowns -= 1
             val longx = toBin(x)
             this.rows(i) |= longx
             this.cols(j) |= longx
@@ -42,33 +45,22 @@ class QBoard (size: Int) {
     this.update()
   }
 
-  /* Deep copy */
-  override def clone(): QBoard = {
-    val Copy = new QBoard(size);
-    Array.copy(rows, 0, Copy.rows, 0, N)
-    Array.copy(cols, 0, Copy.cols, 0, N)
-    Array.copy(blocks, 0, Copy.blocks, 0, N)
-    for (i <- 0 until N) {
-        Array.copy(puzzle(i), 0, Copy.puzzle(i), 0, N)
-      	Array.copy(solution(i), 0, Copy.solution(i), 0, N)
-    }
-    return Copy
-  }
-
   /* Constructor update method, essentially a wrapper for the fill method */
   def update(): Boolean = {
-    for (r <- 0 until N; c <- 0 until N; if (solution(r)(c) == 0) {
+    for (r <- 0 until N; c <- 0 until N; if solution(r)(c) == 0) {
         val b = size * (r / size) + (c / size)
         puzzle(r)(c) = (~rows(r)) & (~cols(c)) & (~blocks(b)) & ALL
         if (puzzle(r)(c) == NONE ||
-            (Long.bitCount(puzzle(r)(c)) == 1 && !fill(r,c, puzzle(r)(c))))
+            (Long.bitCount(puzzle(r)(c)) == 1 && !fill((r,c), puzzle(r)(c))))
           return false
     }
     return true
   }
 
   /* Try to fill a spot and update recursively */
-  def fill(r: Int, c: Int, v: Long): Boolean = {
+  def fill(spot: (Int, Int), v: Long): Boolean = {
+    val r = spot._1
+    val c = spot._2
     val b = size * (r / size) + (c / size)
     solution(r)(c) = toInt(v)
     puzzle(r)(c) = v
@@ -79,13 +71,13 @@ class QBoard (size: Int) {
       if (solution(r)(i) == 0) {
         puzzle(r)(i) &= (~rows(r))
         if (puzzle(r)(i) == NONE ||
-            (Long.bitCount(puzzle(r)(i)) == 1 && !fill(r,i, puzzle(r)(i))))
+            (Long.bitCount(puzzle(r)(i)) == 1 && !fill((r,i), puzzle(r)(i))))
           return false
       }
       if (solution(i)(c) == 0) {
         puzzle(i)(c) &= (~cols(c))
         if (puzzle(i)(c) == NONE ||
-            (Long.bitCount(puzzle(i)(c)) == 1 && !fill(i, c, puzzle(i)(c)) ))
+            (Long.bitCount(puzzle(i)(c)) == 1 && !fill((i,c), puzzle(i)(c)) ))
           return false
       }
       val br = (b / size) * size + i / size
@@ -93,10 +85,11 @@ class QBoard (size: Int) {
       if (solution(br)(bc) == 0 ) {
         puzzle(br)(bc) &= (~blocks(b));
         if (puzzle(br)(bc) == NONE ||
-          (Long.bitCount(puzzle(br)(bc)) == 1 && !fill(br, bc, puzzle(br)(bc))))
+          (Long.bitCount(puzzle(br)(bc)) == 1 && !fill((br,bc), puzzle(br)(bc))))
         return false
       }
     }
+    unknowns -= 1
     return true
   }
 
@@ -114,9 +107,9 @@ class QBoard (size: Int) {
   }
 
   /* Possible fill values */
-  def possibilities (r: Int, c: Int): List[Long] = {
+  def possibilities (spot: (Int, Int)): List[Long] = {
     var L = List[Long]()
-    var x = puzzle(r)(c)
+    var x = puzzle(spot._1)(spot._2)
     for (_ <- 0 until N; if x != 0) {
       L = Long.highestOneBit(x) :: L
       x &= ~L.head
@@ -134,6 +127,25 @@ class QBoard (size: Int) {
 
   def toBin(m: Int): Long = ONE << (m - 1)
   def toInt(s: Long): Int = Long.numberOfTrailingZeros(s) + 1
+
+  def toImmutableVector(): Vector[Int] = {
+    (for (r <- 0 until N; c <- 0 until N)
+      yield solution(r)(c)).toVector
+  }
+
+  /* Deep copy */
+  override def clone(): QBoard = {
+    val Copy = new QBoard(size);
+    Array.copy(rows, 0, Copy.rows, 0, N)
+    Array.copy(cols, 0, Copy.cols, 0, N)
+    Array.copy(blocks, 0, Copy.blocks, 0, N)
+    for (i <- 0 until N) {
+        Array.copy(puzzle(i), 0, Copy.puzzle(i), 0, N)
+      	Array.copy(solution(i), 0, Copy.solution(i), 0, N)
+    }
+    Copy.unknowns = unknowns
+    return Copy
+  }
 
   def print () = {
     val digits = N match {
