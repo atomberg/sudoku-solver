@@ -20,7 +20,6 @@ class Sudoku(size: Int, stream: Iterator[Int]){
   /* Main solver routine */
   def backtrack (board: QBoard): QBoard = {
     steps += 1
-    println(steps + ": " + board.unknowns)
     val spot = board.nextSpot()
     if (spot == null)
       return null
@@ -44,8 +43,8 @@ object Solver extends App {
 
   /* Parse command line arguments and determine the source of the puzzle */
   val src = args match {
-    case Array() => Source.stdin
-    case _ => Source.fromFile(args(0))
+    case Array() => Source.stdin.getLines.flatMap(_.split(" "))
+    case _ => Source.fromFile(args(0)).getLines.flatMap(_.split(" "))
   }
 
   /* Parse the stream of characters from src and construct the Sudoku */
@@ -60,13 +59,14 @@ object Solver extends App {
     case _ => throw new IllegalArgumentException("Empty file.")
   }
   puzzle.solve()
+  println("Solved the puzzle in " + puzzle.steps + " guesses.")
   puzzle.print()
 
-  /* Stream parser function that filters out all characters except 0-9 and x. */
-  def parseStream (list: List[Int], char: Char): List[Int] =
-    (char - '0') match {
-      case 72 | 0 => 0 :: list
-      case i if (i > 0 && i < 10) => i :: list
+  /* Stream parser function that only keeps integers and replaces x with 0. */
+  def parseStream (list: List[Int], s: String): List[Int] = s match {
+      case "x"| "0" => 0 :: list
+      case s if (try {s.toInt; true}
+        catch {case e: NumberFormatException => false}) => s.toInt :: list
       case _ => list
   }
 }

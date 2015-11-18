@@ -50,8 +50,8 @@ class QBoard (board_size: Int) {
     for (r <- 0 until N; c <- 0 until N; if solution(r)(c) == 0) {
         val b = size * (r / size) + (c / size)
         puzzle(r)(c) = (~rows(r)) & (~cols(c)) & (~blocks(b)) & ALL
-        if (puzzle(r)(c) == NONE ||
-            (Long.bitCount(puzzle(r)(c)) == 1 && !fill((r,c), puzzle(r)(c))))
+        if ( puzzle(r)(c) == NONE ||
+            Long.bitCount(puzzle(r)(c)) == 1 && !fill((r,c), puzzle(r)(c)) )
           return false
     }
     return true
@@ -67,25 +67,25 @@ class QBoard (board_size: Int) {
     rows(r) |= v
     cols(c) |= v
     blocks(b) |= v
+    for (i <- 0 until N; if solution(r)(i) == 0) {
+      puzzle(r)(i) &= (~rows(r))
+      if (puzzle(r)(i) == NONE ||
+          Long.bitCount(puzzle(r)(i)) == 1 && !fill((r,i), puzzle(r)(i)) )
+      return false
+    }
+    for (i <- 0 until N; if solution(i)(c) == 0) {
+      puzzle(i)(c) &= (~cols(c))
+      if (puzzle(i)(c) == NONE ||
+          Long.bitCount(puzzle(i)(c)) == 1 && !fill((i,c), puzzle(i)(c)) )
+      return false
+    }
     for (i <- 0 until N) {
-      if (solution(r)(i) == 0) {
-        puzzle(r)(i) &= (~rows(r))
-        if (puzzle(r)(i) == NONE ||
-            (Long.bitCount(puzzle(r)(i)) == 1 && !fill((r,i), puzzle(r)(i))))
-          return false
-      }
-      if (solution(i)(c) == 0) {
-        puzzle(i)(c) &= (~cols(c))
-        if (puzzle(i)(c) == NONE ||
-            (Long.bitCount(puzzle(i)(c)) == 1 && !fill((i,c), puzzle(i)(c)) ))
-          return false
-      }
       val br = (b / size) * size + i / size
-      val bc = (b % size) * size + b % size
+      val bc = (b % size) * size + i % size
       if (solution(br)(bc) == 0 ) {
         puzzle(br)(bc) &= (~blocks(b));
         if (puzzle(br)(bc) == NONE ||
-          (Long.bitCount(puzzle(br)(bc)) == 1 && !fill((br,bc), puzzle(br)(bc))))
+            Long.bitCount(puzzle(br)(bc)) == 1 && !fill((br,bc), puzzle(br)(bc)) )
         return false
       }
     }
